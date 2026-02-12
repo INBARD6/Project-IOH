@@ -29,24 +29,24 @@ class CLIView:
         """הצגת מסך פתיחה"""
         print(f"\n{self._colors['BOLD']}{self._colors['HEADER']}")
         print("=" * 60)
-        print("         🥊 מערכת ניהול UFC - Ultimate Fighting Championship 🥊")
+        print("         🥊 Managment System UFC - Ultimate Fighting Championship 🥊")
         print("=" * 60)
         print(f"{self._colors['ENDC']}")
-        print(f"{self._colors['BLUE']}פרויקט תכנות מונחה עצמים - Python OOP{self._colors['ENDC']}\n")
+        print(f"{self._colors['BLUE']}OOP Project - Python OOP{self._colors['ENDC']}\n")
     
     def show_main_menu(self):
         """הצגת תפריט ראשי"""
         print(f"\n{self._colors['BOLD']}📋 תפריט ראשי:{self._colors['ENDC']}")
-        print(f"{self._colors['GREEN']}1.{self._colors['ENDC']} הוספת לוחם חדש")
-        print(f"{self._colors['GREEN']}2.{self._colors['ENDC']} הצגת כל הלוחמים")
-        print(f"{self._colors['GREEN']}3.{self._colors['ENDC']} חיפוש לוחם")
-        print(f"{self._colors['GREEN']}4.{self._colors['ENDC']} סימולציית קרב")
-        print(f"{self._colors['GREEN']}5.{self._colors['ENDC']} סימולציית טורניר")
-        print(f"{self._colors['GREEN']}6.{self._colors['ENDC']} עדכון לוחם")
-        print(f"{self._colors['GREEN']}7.{self._colors['ENDC']} מחיקת לוחם")
-        print(f"{self._colors['GREEN']}8.{self._colors['ENDC']} היסטוריית קרבות")
-        print(f"{self._colors['GREEN']}9.{self._colors['ENDC']} סטטיסטיקות")
-        print(f"{self._colors['RED']}0.{self._colors['ENDC']} יציאה")
+        print(f"{self._colors['GREEN']}1.{self._colors['ENDC']} Add Fighter")
+        print(f"{self._colors['GREEN']}2.{self._colors['ENDC']} Show All Fighters")
+        print(f"{self._colors['GREEN']}3.{self._colors['ENDC']} Search Fighter")
+        print(f"{self._colors['GREEN']}4.{self._colors['ENDC']} Simulate Fight")
+        print(f"{self._colors['GREEN']}5.{self._colors['ENDC']} Simulate Tournament")
+        print(f"{self._colors['GREEN']}6.{self._colors['ENDC']} Update Fighter")
+        print(f"{self._colors['GREEN']}7.{self._colors['ENDC']} Delete Fighter")
+        print(f"{self._colors['GREEN']}8.{self._colors['ENDC']} Fight History")
+        print(f"{self._colors['GREEN']}9.{self._colors['ENDC']} Statistics")
+        print(f"{self._colors['RED']}0.{self._colors['ENDC']} Exit")
         print("-" * 60)
     
     def get_user_choice(self) -> str:
@@ -59,15 +59,15 @@ class CLIView:
     
     def show_fighter_types_menu(self):
         """הצגת תפריט סוגי לוחמים"""
-        print(f"\n{self._colors['BOLD']}🥋 בחר סוג לוחם:{self._colors['ENDC']}")
-        print(f"{self._colors['GREEN']}1.{self._colors['ENDC']} Fighter (רגיל)")
-        print(f"{self._colors['GREEN']}2.{self._colors['ENDC']} Striker (מתמחה במכות)")
-        print(f"{self._colors['GREEN']}3.{self._colors['ENDC']} Grappler (מתמחה בהיאבקות)")
-        print(f"{self._colors['GREEN']}4.{self._colors['ENDC']} HybridChampion (אלוף היברידי)")
+        print(f"\n{self._colors['BOLD']}🥋 Choose fighter type:{self._colors['ENDC']}")
+        print(f"{self._colors['GREEN']}1.{self._colors['ENDC']} Fighter (Normal fighter)")
+        print(f"{self._colors['GREEN']}2.{self._colors['ENDC']} Striker (Striking specialist)")
+        print(f"{self._colors['GREEN']}3.{self._colors['ENDC']} Grappler (Grappling specialist)")
+        print(f"{self._colors['GREEN']}4.{self._colors['ENDC']} HybridChampion (Well-rounded fighter)")
     
     def show_weight_classes_menu(self):
         """הצגת קטגוריות משקל"""
-        print(f"\n{self._colors['BOLD']}⚖️ קטגוריות משקל זמינות:{self._colors['ENDC']}")
+        print(f"\n{self._colors['BOLD']}⚖️ Weight Classes Available:{self._colors['ENDC']}")
         classes = [
             "Flyweight", "Bantamweight", "Featherweight", "Lightweight",
             "Welterweight", "Middleweight", "Light Heavyweight", "Heavyweight"
@@ -87,12 +87,12 @@ class CLIView:
     def display_fighters_list(self, fighters: List[Fighter]):
         """הצגת רשימת לוחמים"""
         if not fighters:
-            self.show_error("לא נמצאו לוחמים במערכת")
+            self.show_error("No fighters found")
             return
         
         print(f"\n{self._colors['BOLD']}{self._colors['HEADER']}")
         print("=" * 100)
-        print(f"{'ID':<5} {'שם':<25} {'קטגוריה':<20} {'רקורד':<15} {'אחוז ניצחונות':<15}")
+        print(f"{'ID':<5} {'Name':<25} {'Category':<20} {'Record':<15} {'Win Percentage':<15}")
         print("=" * 100)
         print(f"{self._colors['ENDC']}")
         
@@ -107,13 +107,13 @@ class CLIView:
     def display_fighters_table(self, fighters: List[Fighter]):
         """הצגת טבלה מפורטת של לוחמים"""
         if not fighters:
-            self.show_error("לא נמצאו לוחמים")
+            self.show_error("No fighters found")
             return
         
         print(f"\n{self._colors['BOLD']}{self._colors['HEADER']}")
         print("=" * 120)
-        print(f"{'ID':<5} {'שם':<20} {'קטגוריה':<15} {'W-L-D':<12} {'מכות':<8} "
-              f"{'היאבקות':<10} {'כישורי כולל':<12}")
+        print(f"{'ID':<5} {'Name':<20} {'Category':<15} {'W-L-D':<12} {'Striking':<8} "
+              f"{'Grappling':<10} {'Overall Skill':<12}")
         print("=" * 120)
         print(f"{self._colors['ENDC']}")
         
@@ -128,22 +128,22 @@ class CLIView:
     def display_fight_history(self, fights: List[dict]):
         """הצגת היסטוריית קרבות"""
         if not fights:
-            self.show_error("אין קרבות בהיסטוריה")
+            self.show_error("No fights in history")
             return
         
         print(f"\n{self._colors['BOLD']}{self._colors['HEADER']}")
         print("=" * 100)
-        print("📜 היסטוריית קרבות")
+        print("📜 Fight History")
         print("=" * 100)
         print(f"{self._colors['ENDC']}")
         
         for fight in fights:
-            print(f"\n{self._colors['BOLD']}קרב #{fight.get('fight_id', 'N/A')}:{self._colors['ENDC']}")
+            print(f"\n{self._colors['BOLD']}Fight #{fight.get('fight_id', 'N/A')}:{self._colors['ENDC']}")
             print(f"  {fight['fighter1']} vs {fight['fighter2']}")
-            print(f"  {self._colors['GREEN']}🏆 מנצח: {fight['winner']}{self._colors['ENDC']}")
+            print(f"  {self._colors['GREEN']}🏆 Winnner: {fight['winner']}{self._colors['ENDC']}")
             print(f"  שיטה: {fight['method']}")
             if 'date' in fight:
-                print(f"  תאריך: {fight['date']}")
+                print(f"  Date: {fight['date']}")
         
         print(f"\n{self._colors['HEADER']}{'=' * 100}{self._colors['ENDC']}\n")
     
@@ -151,7 +151,7 @@ class CLIView:
         """הצגת סטטיסטיקות"""
         print(f"\n{self._colors['BOLD']}{self._colors['HEADER']}")
         print("=" * 60)
-        print("📊 סטטיסטיקות מערכת UFC")
+        print("📊 System Statistics")
         print("=" * 60)
         print(f"{self._colors['ENDC']}")
         
@@ -186,7 +186,7 @@ class CLIView:
         """הצגת הודעת פרידה"""
         print(f"\n{self._colors['BOLD']}{self._colors['HEADER']}")
         print("=" * 60)
-        print("         🥊 תודה שהשתמשת במערכת UFC! להתראות! 🥊")
+        print("         🥊 Thanks for playing UFC! Goodbye! 🥊")
         print("=" * 60)
         print(f"{self._colors['ENDC']}\n")
     

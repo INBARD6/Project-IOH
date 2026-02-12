@@ -46,7 +46,7 @@ class Fighter:
     @name.setter
     def name(self, value):
         if not value or not isinstance(value, str):
-            raise ValueError("שם הלוחם חייב להיות מחרוזת לא ריקה")
+            raise ValueError("Fighter name must be a non-empty string")
         self._name = value
     
     @property

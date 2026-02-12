@@ -50,7 +50,7 @@ class OllamaClient:
             str: התשובה או None במקרה של כשלון
         """
         if not self.is_available():
-            print("❌ שרת Ollama לא זמין")
+            print("❌ Ollama server is not available")
             return None
         
         used_model = model or self._model
@@ -70,11 +70,11 @@ class OllamaClient:
                 result = response.json()
                 return result.get('response', '')
             else:
-                print(f"❌ שגיאה: {response.status_code}")
+                print(f"❌ Error: {response.status_code}")
                 return None
                 
         except Exception as e:
-            print(f"❌ שגיאה בתקשורת עם Ollama: {e}")
+            print(f"❌ Error communicating with Ollama: {e}")
             return None
     
     def analyze_fighter_description(self, description: str) -> dict:
@@ -193,7 +193,7 @@ class OllamaClient:
                 data = response.json()
                 return [model['name'] for model in data.get('models', [])]
         except Exception as e:
-            print(f"❌ שגיאה בקבלת מודלים: {e}")
+            print(f"❌ Error retrieving available models: {e}")
         
         return []
     
@@ -205,7 +205,7 @@ class OllamaClient:
             model: שם המודל
         """
         self._model = model
-        print(f"✅ מודל הוגדר ל-{model}")
+        print(f"✅ Model set to {model}")
 
 
 # דוגמה לשימוש
@@ -213,18 +213,18 @@ if __name__ == "__main__":
     client = OllamaClient()
     
     if client.is_available():
-        print("✅ שרת Ollama זמין!")
+        print("✅Ollama is available!")
         
         # בדיקת מודלים זמינים
         models = client.get_available_models()
-        print(f"מודלים זמינים: {models}")
+        print(f"Available models: {models}")
         
         # דוגמה לשימוש
         analysis = client.generate_fighter_matchup_analysis(
             "Conor McGregor", "Khabib Nurmagomedov",
             "Striker", "Grappler"
         )
-        print(f"\nניתוח התאמה:\n{analysis}")
+        print(f"\nmatch analysis:\n{analysis}")
     else:
-        print("❌ שרת Ollama לא זמין")
-        print("להתקנה: docker pull ollama/ollama")
+        print("❌ Ollama server is not available")
+        print("To install: docker pull ollama/ollama")

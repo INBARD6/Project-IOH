@@ -195,9 +195,9 @@ class MainController:
         self._view.show_info(f"נמצאו {len(fighters)} לוחמים")
         
         # בחירת סוג תצוגה
-        print("\n1. תצוגה פשוטה")
-        print("2. תצוגה מפורטת")
-        print("3. תצוגה מלאה")
+        print("\n1. Simple Display")
+        print("2. Detailed Display")
+        print("3. Full Display")
         
         view_choice = self._view.get_user_choice()
         
@@ -348,11 +348,11 @@ class MainController:
         
         self._view.display_fighter(fighter)
         
-        print("\nמה תרצה לעדכן?")
-        print("1. שם")
-        print("2. הוספת ניצחון")
-        print("3. הוספת הפסד")
-        print("4. שיפור כישורים")
+        print("\nWhat do you want to update?")
+        print("1. Name")
+        print("2. Add Win")
+        print("3. Add Loss")
+        print("4. Improve Skills")
         
         choice = self._view.get_user_choice()
         
