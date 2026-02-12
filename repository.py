@@ -77,7 +77,7 @@ class Repository:
         
         conn.commit()
         conn.close()
-        print(f"✅ מסד נתונים '{self._db_name}' אותחל בהצלחה")
+        print(f"✅ Database '{self._db_name}' Successfully Initialized")
     
     # CRUD Operations - CREATE
     def add_fighter(self, fighter: Fighter) -> bool:
@@ -126,14 +126,14 @@ class Repository:
             
             conn.commit()
             conn.close()
-            print(f"✅ {fighter.name} נוסף למסד הנתונים")
+            print(f"✅ {fighter.name} added to the database")
             return True
             
         except sqlite3.IntegrityError:
-            print(f"❌ שגיאה: לוחם עם ID {fighter.fighter_id} כבר קיים")
+            print(f"❌ Error: Fighter with ID {fighter.fighter_id} already exists")
             return False
         except Exception as e:
-            print(f"❌ שגיאה בהוספת לוחם: {e}")
+            print(f"❌ Error adding fighter: {e}")
             return False
     
     # CRUD Operations - READ
@@ -241,11 +241,11 @@ class Repository:
             
             conn.commit()
             conn.close()
-            print(f"✅ {fighter.name} עודכן במסד הנתונים")
+            print(f"✅ {fighter.name} Updated Successfully")
             return True
             
         except Exception as e:
-            print(f"❌ שגיאה בעדכון לוחם: {e}")
+            print(f"❌ Error updating fighter: {e}")
             return False
     
     # CRUD Operations - DELETE
@@ -270,14 +270,14 @@ class Repository:
             conn.close()
             
             if deleted:
-                print(f"✅ לוחם {fighter_id} נמחק")
+                print(f"✅ Fighter {fighter_id} Deleted Successfully")
             else:
-                print(f"❌ לוחם {fighter_id} לא נמצא")
+                print(f"❌ Fighter {fighter_id} Not Found")
             
             return deleted
             
         except Exception as e:
-            print(f"❌ שגיאה במחיקת לוחם: {e}")
+            print(f"❌ Error deleting fighter: {e}")
             return False
     
     def save_fight_result(self, fight_result: dict) -> bool:
@@ -305,7 +305,7 @@ class Repository:
             return True
             
         except Exception as e:
-            print(f"❌ שגיאה בשמירת קרב: {e}")
+            print(f"❌ Error saving fight result: {e}")
             return False
     
     def get_fight_history(self, limit: int = 10) -> List[dict]:

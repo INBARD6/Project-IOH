@@ -35,7 +35,7 @@ class CombatEngine:
         Returns:
             dict: תוצאות הקרב
         """
-        print(f"\n🥊 קרב: {fighter1.name} vs {fighter2.name}")
+        print(f"\n🥊 Fight: {fighter1.name} vs {fighter2.name}")
         print("=" * 50)
         
         # חישוב יתרון
@@ -75,9 +75,9 @@ class CombatEngine:
         self._fight_history.append(result)
         
         # הצגת תוצאות
-        print(f"\n🏆 מנצח: {winner.name} ב-{method}!")
-        print(f"   ציון {fighter1.name}: {result['fighter1_score']}")
-        print(f"   ציון {fighter2.name}: {result['fighter2_score']}")
+        print(f"\n🏆 Winner: {winner.name} by {method}!")
+        print(f"   Score {fighter1.name}: {result['fighter1_score']}")
+        print(f"   Score {fighter2.name}: {result['fighter2_score']}")
         
         return result
     
@@ -143,16 +143,16 @@ class CombatEngine:
             Fighter: המנצח בטורניר
         """
         if len(fighters) < 2:
-            raise ValueError("נדרשים לפחות 2 לוחמים לטורניר")
+            raise ValueError("At least 2 fighters are required for a tournament")
         
-        print(f"\n🏆 טורניר UFC - {len(fighters)} לוחמים!")
+        print(f"\n🏆 UFC Tournament - {len(fighters)} Fighters!")
         print("=" * 60)
         
         current_round = fighters.copy()
         round_num = 1
         
         while len(current_round) > 1:
-            print(f"\n--- סיבוב {round_num} ---")
+            print(f"\n--- Round {round_num} ---")
             next_round = []
             
             # צמידות אקראיות
@@ -167,13 +167,13 @@ class CombatEngine:
                 else:
                     # לוחם בודד עובר אוטומטית
                     next_round.append(current_round[i])
-                    print(f"{current_round[i].name} עובר אוטומטית לסיבוב הבא")
+                    print(f"{current_round[i].name} goes automatically to the next round")
             
             current_round = next_round
             round_num += 1
         
         champion = current_round[0]
-        print(f"\n🏆🏆🏆 אלוף הטורניר: {champion.name}! 🏆🏆🏆")
+        print(f"\n🏆🏆🏆 Tournament Champion: {champion.name}! 🏆🏆🏆")
         
         return champion
     
@@ -185,7 +185,7 @@ class CombatEngine:
             dict: סטטיסטיקות
         """
         if not self._fight_history:
-            return {'total_fights': 0, 'message': 'אין קרבות בהיסטוריה'}
+            return {'total_fights': 0, 'message': 'No fights in history'}
         
         methods = [fight['method'] for fight in self._fight_history]
         method_counts = {}
@@ -201,4 +201,4 @@ class CombatEngine:
     def clear_history(self):
         """ניקוי היסטוריית קרבות"""
         self._fight_history.clear()
-        print("היסטוריית הקרבות נוקתה")
+        print("Fight history cleared")
