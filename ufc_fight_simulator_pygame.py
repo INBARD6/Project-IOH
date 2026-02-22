@@ -143,10 +143,11 @@ class App:
         self.btn_exit = Button((WIDTH//2+10, 555, 250, 60), "EXIT", self.font_b, accent=(120,120,180))
 
         # select buttons
-        self.btn_add_legends = Button((70, 620, 220, 52), "Add Legends", self.font, accent=RED)
-        self.btn_create = Button((300, 620, 220, 52), "Create Fighter", self.font, accent=YELLOW)
-        self.btn_start = Button((530, 620, 220, 52), "START FIGHT", self.font, accent=GREEN)
-        self.btn_back = Button((760, 620, 160, 52), "Back", self.font, accent=(140,140,200))
+        # select buttons - הרמנו אותם קצת למעלה
+        self.btn_add_legends = Button((70, 600, 220, 50), "Add Legends", self.font, accent=RED)
+        self.btn_create = Button((300, 600, 220, 50), "Create Fighter", self.font, accent=YELLOW)
+        self.btn_start = Button((530, 600, 220, 50), "START FIGHT", self.font, accent=GREEN)
+        self.btn_back = Button((760, 600, 160, 50), "Back", self.font, accent=(140,140,200))
 
         # create buttons
         self.btn_save = Button((920, 560, 260, 56), "SAVE", self.font_b, accent=GREEN)
@@ -173,20 +174,41 @@ class App:
 
     def add_legends(self):
         base = self.next_id()
-        legends = [
-            Grappler(base, "Khabib Nurmagomedov", "Lightweight", striking_power=78, grappling_skill=97, submission_skill=92, takedown_defense=90),
-            Striker(base+1, "Conor McGregor", "Lightweight", striking_power=95, grappling_skill=65, speed=78, kick_power=86),
-            HybridChampion(base+2, "Jon Jones", "Heavyweight", striking_power=92, grappling_skill=90, speed=78, kick_power=80, submission_skill=80, takedown_defense=93, versatility=92),
-            HybridChampion(base+3, "Amanda Nunes", "Bantamweight", striking_power=93, grappling_skill=85, speed=82, kick_power=86, submission_skill=78, takedown_defense=82, versatility=88),
-            Striker(base+4, "Anderson Silva", "Middleweight", striking_power=97, grappling_skill=78, speed=84, kick_power=95),
-            HybridChampion(base+5, "Georges St-Pierre", "Welterweight", striking_power=88, grappling_skill=93, speed=84, kick_power=80, submission_skill=82, takedown_defense=92, versatility=90),
-        ]
+        
+        # יצירת האובייקטים של הלוחמים
+        khabib = Grappler(base, "Khabib Nurmagomedov", "Lightweight", striking_power=78, grappling_skill=97, submission_skill=92, takedown_defense=90)
+        khabib.skin_color = (198, 134, 103)  # עור שזוף
+        khabib.hair_color = (20, 20, 20)      # שיער שחור
+        khabib.pants_color = (20, 20, 20)     # מכנס שחור
+
+        conor = Striker(base+1, "Conor McGregor", "Lightweight", striking_power=95, grappling_skill=65, speed=78, kick_power=86)
+        conor.skin_color = (255, 224, 196)   # עור בהיר
+        conor.hair_color = (180, 90, 40)      # שיער ג'ינג'י
+        conor.pants_color = (34, 139, 34)     # מכנס ירוק (אירלנד)
+
+        jones = HybridChampion(base+2, "Jon Jones", "Heavyweight", striking_power=92, grappling_skill=90, speed=78, kick_power=80, submission_skill=80, takedown_defense=93, versatility=92)
+        jones.skin_color = (75, 50, 35)       # עור כהה
+        jones.hair_color = (10, 10, 10)       # שיער שחור
+        jones.pants_color = (180, 0, 0)       # מכנס אדום
+
+        silva = Striker(base+4, "Anderson Silva", "Middleweight", striking_power=97, grappling_skill=78, speed=84, kick_power=95)
+        silva.skin_color = (100, 70, 45)      # עור חום כהה
+        silva.hair_color = (0, 0, 0)          # קרחת (צבע עור או שחור קרוב)
+        silva.pants_color = (255, 215, 0)     # מכנס צהוב (ברזיל)
+
+        gsp = HybridChampion(base+5, "Georges St-Pierre", "Welterweight", striking_power=88, grappling_skill=93, speed=84, kick_power=80, submission_skill=82, takedown_defense=92, versatility=90)
+        gsp.skin_color = (245, 200, 170)      # עור בהיר
+        gsp.hair_color = (60, 50, 40)         # שיער חום בהיר
+        gsp.pants_color = (200, 200, 200)     # מכנס לבן/אפור
+
+        legends = [khabib, conor, jones, silva, gsp]
+        
         added = 0
         for f in legends:
             if self.repo.add_fighter(f):
                 added += 1
         self.refresh_fighters()
-        self.push_log(f"Added {added} legends to DB.")
+        self.push_log(f"Added {added} legends with custom styles to DB.")
 
     # ----------------- HOME -----------------
     def draw_home(self, mouse):
@@ -731,7 +753,7 @@ Return the JSON on a separate line, and keep it valid JSON.
 
     # ----------------- LOG -----------------
     def draw_log(self):
-        rect = pygame.Rect(70, 690-80, 1150, 70)
+        rect = pygame.Rect(70, 660, 1140, 50)
         draw_rect_round(self.screen, rect, (14,14,22), r=14)
         draw_rect_round(self.screen, rect, (45,45,70), r=14, width=2)
         y = rect.y + 10
@@ -801,6 +823,24 @@ class FightArena:
         self.winner = None
         self.saved = False
         self.spawn_time = time.time()
+
+        try:
+            img = pygame.image.load("assets/arena_bg.png").convert_alpha()
+            self.arena_img = pygame.transform.scale(img, (self.arena.width, self.arena.height))
+        except Exception as e:
+            print(f"Error loading arena image: {e}")
+            self.arena_img = None
+
+    def get_octagon_points(self, rect):
+        """מחשבת 8 נקודות עבור זירה מתומנת בתוך מלבן נתון"""
+        x, y, w, h = rect.x, rect.y, rect.width, rect.height
+        offset = w * 0.25  # קובע כמה הפינות יהיו קטומות
+        return [
+            (x + offset, y), (x + w - offset, y),      # צלע עליונה
+            (x + w, y + offset), (x + w, y + h - offset), # צלע ימנית
+            (x + w - offset, y + h), (x + offset, y + h), # צלע תחתונה
+            (x, y + h - offset), (x, y + offset)          # צלע שמאלית
+        ]
 
     def update(self, dt):
         if self.over:
@@ -979,38 +1019,68 @@ class FightArena:
             if move=="grapple" and random.random() < 0.35:
                 self.stun1_until = time.time() + 0.45
 
-    def draw_fighter(self, surf, center, main_color):
-        # Simple "fighter" silhouette (head+body+gloves), not a square
+
+
+    def draw_fighter(self, surf, center, fighter_obj, main_color):
         cx, cy = int(center.x), int(center.y)
-        # body
-        pygame.draw.ellipse(surf, (20,20,28), (cx-26, cy-18, 52, 62))
-        pygame.draw.ellipse(surf, main_color, (cx-26, cy-18, 52, 62), 3)
-        # head
-        pygame.draw.circle(surf, (24,24,36), (cx, cy-40), 16)
-        pygame.draw.circle(surf, main_color, (cx, cy-40), 16, 3)
-        # gloves
-        pygame.draw.circle(surf, main_color, (cx-34, cy-5), 10)
-        pygame.draw.circle(surf, main_color, (cx+34, cy-5), 10)
-        pygame.draw.circle(surf, (10,10,14), (cx-34, cy-5), 10, 2)
-        pygame.draw.circle(surf, (10,10,14), (cx+34, cy-5), 10, 2)
+        
+        # שליפת צבעים מהאובייקט (עם ערכי ברירת מחדל ליתר ביטחון)
+        skin = getattr(fighter_obj, 'skin_color', (255, 224, 189))
+        hair = getattr(fighter_obj, 'hair_color', (50, 30, 20))
+        pants = getattr(fighter_obj, 'pants_color', (50, 50, 50))
+        
+        # 1. גוף (טורסו)
+        pygame.draw.ellipse(surf, skin, (cx-22, cy-15, 44, 50))
+        
+        # 2. מכנסיים (החלק התחתון של האליפסה)
+        pygame.draw.rect(surf, pants, (cx-22, cy+15, 44, 20), border_radius=5)
+        
+        # 3. ראש
+        pygame.draw.circle(surf, skin, (cx, cy-35), 15)
+        
+        # 4. שיער (חצי עיגול מעל הראש)
+        pygame.draw.arc(surf, hair, (cx-16, cy-51, 32, 30), 0, 3.14, 8)
+        
+        # 5. כפפות (בצבע הקבוצה - אדום/כחול)
+        pygame.draw.circle(surf, main_color, (cx-30, cy+5), 9) # כפפה שמאל
+        pygame.draw.circle(surf, main_color, (cx+30, cy+5), 9) # כפפה ימין
+        
+        # 6. קווי מתאר (כדי שייראה מקצועי)
+        pygame.draw.circle(surf, (20, 20, 20), (cx, cy-35), 15, 2)
+
+
 
     def draw(self, surf, mouse):
         surf.fill(BG)
 
-        # HUD
-        self.draw_bar(surf, 70, 80, 520, 16, f"{self.f1.name} HP", self.hp1, 100, RED)
-        self.draw_bar(surf, 70, 110, 520, 14, "STA", int(self.sta1), 100, YELLOW)
-
-        self.draw_bar(surf, 690, 80, 520, 16, f"{self.f2.name} HP", self.hp2, 100, BLUE)
-        self.draw_bar(surf, 690, 110, 520, 14, "STA", int(self.sta2), 100, YELLOW)
-
-        # Arena (NOT split)
-        draw_rect_round(surf, self.arena, (14,14,22), r=18)
-        draw_rect_round(surf, self.arena, (45,45,70), r=18, width=2)
+        # HUD - מדי חיים במרכז למעלה
+        center_x = WIDTH // 2
+        bar_w = 400
+        
+        # לוחם 1 (שמאל)
+        self.draw_bar(surf, center_x - bar_w - 20, 40, bar_w, 25, self.f1.name, self.hp1, 100, RED)
+        
+        # לוחם 2 (ימין)
+        self.draw_bar(surf, center_x + 20, 40, bar_w, 25, self.f2.name, self.hp2, 100, BLUE)
+      
+        # ציור רקע הזירה החדש
+        if self.arena_img:
+            # אם התמונה נטענה, נשים אותה
+            surf.blit(self.arena_img, self.arena.topleft)
+        else:
+            # אם אין תמונה, נצייר רקע אפור כגיבוי
+            pygame.draw.rect(surf, (40, 40, 50), self.arena)
+            pygame.draw.rect(surf, (200, 200, 200), self.arena, width=3)
+        
+        # 3. הוספת לוגו UFC במרכז (אופציונלי - טקסט פשוט)
+        logo_font = pygame.font.SysFont(None, 120)
+        logo_surf = logo_font.render("UFC", True, (35, 38, 52))
+        logo_rect = logo_surf.get_rect(center=self.arena.center)
+        surf.blit(logo_surf, logo_rect)
 
         # fighters
-        self.draw_fighter(surf, self.p1, RED)
-        self.draw_fighter(surf, self.p2, BLUE)
+        self.draw_fighter(surf, self.p1, self.f1, RED)
+        self.draw_fighter(surf, self.p2, self.f2, BLUE)
 
         # controls overlay (first 3 seconds)
         now = time.time()

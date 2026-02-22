@@ -11,7 +11,7 @@ class Fighter:
     
     def __init__(self, fighter_id: int, name: str, weight_class: str, 
                  wins: int = 0, losses: int = 0, draws: int = 0, 
-                 striking_power: int = 50, grappling_skill: int = 50):
+                 striking_power: int = 50, grappling_skill: int = 50):    
         """
         אתחול לוחם
         
@@ -33,6 +33,11 @@ class Fighter:
         self._draws = draws
         self._striking_power = max(0, min(100, striking_power))
         self._grappling_skill = max(0, min(100, grappling_skill))
+        
+        # ערכי ברירת מחדל (Skin: Tan, Hair: Black, Pants: Black)
+        self.skin_color = striking_power.get('skin', (255, 220, 180)) if isinstance(striking_power, dict) else (255, 220, 180)
+        self.hair_color = (40, 40, 40)
+        self.pants_color = (30, 30, 30)
     
     # Properties לאנקפסולציה
     @property

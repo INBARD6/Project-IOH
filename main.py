@@ -1,25 +1,15 @@
-"""
-main.py
-נקודת כניסה ראשית לאפליקציית UFC Management System
-"""
-
-from MainController import MainController
-
+# אנחנו מייבאים את המשחק המלא שלכם!
+from ufc_fight_simulator_pygame import App
 
 def main():
-    """
-    פונקציה ראשית - מפעילה את הבקר הראשי
-    """
     try:
-        controller = MainController()
-        controller.run()
-    except KeyboardInterrupt:
-        print("\n\n⚠️  program stopped by user.")
+        print("Starting FULL UFC Graphic Simulator...")
+        game = App()
+        game.run()
     except Exception as e:
-        print(f"\n❌ critical error: {e}")
+        print(f"Error: {e}")
         import traceback
         traceback.print_exc()
-
 
 if __name__ == "__main__":
     main()

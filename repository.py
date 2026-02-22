@@ -18,7 +18,7 @@ class Repository:
     מדגימה: שכבת גישה לנתונים (Data Access Layer)
     """
     
-    def __init__(self, db_name: str = "ufc_database.db"):
+    def __init__(self, db_name: str = "ufc_v3.db"):
         """
         אתחול מסד נתונים
         
@@ -29,8 +29,11 @@ class Repository:
         self._create_tables()
     
     def _get_connection(self):
-        """יצירת חיבור למסד נתונים"""
-        return sqlite3.connect(self._db_name)
+        """יצירת חיבור למסד נתונים עם תמיכה בשמות עמודות"""
+        conn = sqlite3.connect(self._db_name)
+        # השורה הזו היא הקסם - היא מאפשרת לנו לגשת לנתונים לפי שם העמודה
+        conn.row_factory = sqlite3.Row
+        return conn
     
     def _create_tables(self):
         """יצירת טבלאות במסד נתונים"""
@@ -48,6 +51,9 @@ class Repository:
                 draws INTEGER DEFAULT 0,
                 striking_power INTEGER DEFAULT 50,
                 grappling_skill INTEGER DEFAULT 50,
+                skin_color TEXT,
+                hair_color TEXT,
+                pants_color TEXT,
                 fighter_type TEXT DEFAULT 'Fighter',
                 speed INTEGER,
                 kick_power INTEGER,
@@ -80,58 +86,35 @@ class Repository:
         print(f"✅ Database '{self._db_name}' Successfully Initialized")
     
     # CRUD Operations - CREATE
-    def add_fighter(self, fighter: Fighter) -> bool:
-        """
-        הוספת לוחם למסד נתונים
-        
-        Args:
-            fighter: אובייקט לוחם
-            
-        Returns:
-            bool: האם ההוספה הצליחה
-        """
+    def add_fighter(self, f: Fighter) -> bool:
+        """הוספת לוחם למסד נתונים כולל צבעי מראה"""
         try:
             conn = self._get_connection()
             cursor = conn.cursor()
             
-            data = fighter.to_dict()
-            
+            # אנחנו מוסיפים את עמודות הצבעים לפקודת ה-INSERT
             cursor.execute('''
-                INSERT INTO fighters (
-                    fighter_id, name, weight_class, wins, losses, draws,
-                    striking_power, grappling_skill, fighter_type,
-                    speed, kick_power, knockout_wins,
-                    submission_skill, takedown_defense, submission_wins,
-                    versatility, title_defenses
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT OR IGNORE INTO fighters (
+                    fighter_id, name, weight_class, wins, losses, draws, 
+                    striking_power, grappling_skill, 
+                    skin_color, hair_color, pants_color, 
+                    fighter_type
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
-                data['fighter_id'],
-                data['name'],
-                data['weight_class'],
-                data['wins'],
-                data['losses'],
-                data['draws'],
-                data['striking_power'],
-                data['grappling_skill'],
-                data.get('fighter_type', 'Fighter'),
-                data.get('speed'),
-                data.get('kick_power'),
-                data.get('knockout_wins'),
-                data.get('submission_skill'),
-                data.get('takedown_defense'),
-                data.get('submission_wins'),
-                data.get('versatility'),
-                data.get('title_defenses')
+                f.fighter_id, f.name, f.weight_class, f.wins, f.losses, f.draws,
+                f.striking_power, f.grappling_skill,
+                # הופכים את ה-Tuple (R,G,B) למחרוזת טקסט פשוטה "R,G,B"
+                ",".join(map(str, getattr(f, 'skin_color', (255,220,180)))),
+                ",".join(map(str, getattr(f, 'hair_color', (40,40,40)))),
+                ",".join(map(str, getattr(f, 'pants_color', (30,30,30)))),
+                f.__class__.__name__
             ))
             
             conn.commit()
             conn.close()
-            print(f"✅ {fighter.name} added to the database")
+            print(f"✅ {f.name} added with custom style")
             return True
             
-        except sqlite3.IntegrityError:
-            print(f"❌ Error: Fighter with ID {fighter.fighter_id} already exists")
-            return False
         except Exception as e:
             print(f"❌ Error adding fighter: {e}")
             return False
@@ -337,38 +320,39 @@ class Repository:
         
         return fights
     
-    def _row_to_fighter(self, row) -> Fighter:
-        """המרת שורה ממסד נתונים לאובייקט לוחם"""
-        fighter_type = row[8]  # fighter_type column
+    def _row_to_fighter(self, row: sqlite3.Row) -> Fighter:
+        """הופכת שורה מהדאטה-בייס לאובייקט לוחם עם צבעים"""
+        # שליפת סוג הלוחם
+        f_type = row['fighter_type']
         
-        data = {
-            'fighter_id': row[0],
-            'name': row[1],
-            'weight_class': row[2],
-            'wins': row[3],
-            'losses': row[4],
-            'draws': row[5],
-            'striking_power': row[6],
-            'grappling_skill': row[7],
-            'speed': row[9],
-            'kick_power': row[10],
-            'knockout_wins': row[11],
-            'submission_skill': row[12],
-            'takedown_defense': row[13],
-            'submission_wins': row[14],
-            'versatility': row[15],
-            'title_defenses': row[16]
-        }
+        # יצירת הלוחם עם נתוני הבסיס
+        args = (row['fighter_id'], row['name'], row['weight_class'], 
+                row['wins'], row['losses'], row['draws'], 
+                row['striking_power'], row['grappling_skill'])
         
-        # יצירת הלוחם המתאים לפי הסוג
-        if fighter_type == 'Striker':
-            return Striker.from_dict(data)
-        elif fighter_type == 'Grappler':
-            return Grappler.from_dict(data)
-        elif fighter_type == 'HybridChampion':
-            return HybridChampion.from_dict(data)
+        if f_type == 'Striker':
+            f = Striker(*args)
+        elif f_type == 'Grappler':
+            f = Grappler(*args)
+        elif f_type == 'HybridChampion':
+            f = HybridChampion(*args)
         else:
-            return Fighter.from_dict(data)
+            f = Fighter(*args)
+
+        # פונקציית עזר להפוך טקסט "255,0,0" חזרה לטבלה של מספרים
+        def parse_color(color_str, default):
+            if not color_str: return default
+            try:
+                return tuple(map(int, color_str.split(',')))
+            except:
+                return default
+
+        # הוספת הצבעים לאובייקט הלוחם
+        f.skin_color = parse_color(row['skin_color'], (255, 220, 180))
+        f.hair_color = parse_color(row['hair_color'], (40, 40, 40))
+        f.pants_color = parse_color(row['pants_color'], (30, 30, 30))
+        
+        return f
     
     def get_statistics(self) -> dict:
         """סטטיסטיקות כלליות"""
