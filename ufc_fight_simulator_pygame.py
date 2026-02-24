@@ -135,12 +135,11 @@ class App:
         # fight
         self.fight = None
 
-        # home buttons - clear mode
-        self.btn_vs_cpu = Button((WIDTH//2-260, 300, 520, 70), "PLAY VS CPU", self.font_b, accent=GREEN)
-        self.btn_2p = Button((WIDTH//2-260, 385, 520, 70), "PLAY 2 PLAYERS", self.font_b, accent=BLUE)
-        self.btn_roster = Button((WIDTH//2-260, 470, 520, 70), "FIGHTER ROSTER", self.font_b, accent=YELLOW)
-        self.btn_about = Button((WIDTH//2-260, 555, 250, 60), "ABOUT", self.font_b, accent=(140,140,200))
-        self.btn_exit = Button((WIDTH//2+10, 555, 250, 60), "EXIT", self.font_b, accent=(120,120,180))
+        # home buttons - מותאם למצב שחקן יחיד בלבד
+        self.btn_vs_cpu = Button((WIDTH//2-260, 320, 520, 80), "PLAY VS CPU", self.font_b, accent=GREEN)
+        self.btn_roster = Button((WIDTH//2-260, 420, 520, 80), "FIGHTER ROSTER", self.font_b, accent=YELLOW)
+        self.btn_about = Button((WIDTH//2-260, 520, 250, 60), "ABOUT", self.font_b, accent=(140,140,200))
+        self.btn_exit = Button((WIDTH//2+10, 520, 250, 60), "EXIT", self.font_b, accent=(120,120,180))
 
         # select buttons
         # select buttons - הרמנו אותם קצת למעלה
@@ -165,7 +164,18 @@ class App:
         self.log = self.log[-self.log_max:]
 
     def refresh_fighters(self):
-        self.fighters = self.repo.get_all_fighters()
+        all_from_repo = self.repo.get_all_fighters()
+        
+        # מסננת למניעת כפילויות ויזואליות
+        unique_fighters = []
+        seen_names = set()
+        
+        for f in all_from_repo:
+            if f.name not in seen_names:
+                unique_fighters.append(f)
+                seen_names.add(f.name)
+        
+        self.fighters = unique_fighters
 
     def next_id(self):
         if not self.fighters:
@@ -173,43 +183,57 @@ class App:
         return max(f.fighter_id for f in self.fighters) + 1
 
     def add_legends(self):
-        base = self.next_id()
+        # 1. ניקוי אגרסיבי של המאגר כדי להעיף את GSP ושמירות ישנות
+        self.fighters.clear()
+        if hasattr(self.repo, 'fighters'):
+            self.repo.fighters.clear()
+        if hasattr(self.repo, '_fighters'):
+            self.repo._fighters.clear()
+            
+        base = 1 
         
-        # יצירת האובייקטים של הלוחמים
-        khabib = Grappler(base, "Khabib Nurmagomedov", "Lightweight", striking_power=78, grappling_skill=97, submission_skill=92, takedown_defense=90)
-        khabib.skin_color = (198, 134, 103)  # עור שזוף
-        khabib.hair_color = (20, 20, 20)      # שיער שחור
-        khabib.pants_color = (20, 20, 20)     # מכנס שחור
-
-        conor = Striker(base+1, "Conor McGregor", "Lightweight", striking_power=95, grappling_skill=65, speed=78, kick_power=86)
-        conor.skin_color = (255, 224, 196)   # עור בהיר
-        conor.hair_color = (180, 90, 40)      # שיער ג'ינג'י
-        conor.pants_color = (34, 139, 34)     # מכנס ירוק (אירלנד)
-
-        jones = HybridChampion(base+2, "Jon Jones", "Heavyweight", striking_power=92, grappling_skill=90, speed=78, kick_power=80, submission_skill=80, takedown_defense=93, versatility=92)
-        jones.skin_color = (75, 50, 35)       # עור כהה
-        jones.hair_color = (10, 10, 10)       # שיער שחור
-        jones.pants_color = (180, 0, 0)       # מכנס אדום
-
-        silva = Striker(base+4, "Anderson Silva", "Middleweight", striking_power=97, grappling_skill=78, speed=84, kick_power=95)
-        silva.skin_color = (100, 70, 45)      # עור חום כהה
-        silva.hair_color = (0, 0, 0)          # קרחת (צבע עור או שחור קרוב)
-        silva.pants_color = (255, 215, 0)     # מכנס צהוב (ברזיל)
-
-        gsp = HybridChampion(base+5, "Georges St-Pierre", "Welterweight", striking_power=88, grappling_skill=93, speed=84, kick_power=80, submission_skill=82, takedown_defense=92, versatility=90)
-        gsp.skin_color = (245, 200, 170)      # עור בהיר
-        gsp.hair_color = (60, 50, 40)         # שיער חום בהיר
-        gsp.pants_color = (200, 200, 200)     # מכנס לבן/אפור
-
-        legends = [khabib, conor, jones, silva, gsp]
+        # --- הגדרת 5 הלוחמים ---
         
+        # 1. חביב נורמגומדוב (רוסיה)
+        khabib = Grappler(base, "Khabib Nurmagomedov", "Lightweight", 78, 97, 92, 90)
+        khabib.skin_color, khabib.hair_color, khabib.pants_color = (198, 134, 103), (20, 20, 20), (20, 20, 20)
+        khabib.country = "Russia"  
+
+        # 2. קונור מקגרגור (אירלנד)
+        conor = Striker(base+1, "Conor McGregor", "Lightweight", 95, 65, 78, 86)
+        conor.country = "Ireland" 
+        conor.skin_color, conor.hair_color, conor.pants_color = (255, 224, 196), (180, 90, 40), (34, 139, 34)
+
+        # 3. אהבת "גולדנבוי" גורדון (ישראל - מחליף את GSP)
+        ah_gordon = HybridChampion(base+2, 'Ahavat "Goldenboy" Gordon', "Light Heavyweight", 92, 88, 86, 85, 84, 88, 90)
+        ah_gordon.skin_color = (220, 175, 140)  
+        ah_gordon.hair_color = (160, 130, 80)   
+        ah_gordon.pants_color = (90, 10, 10)    
+        ah_gordon.hair_length = "long" 
+        ah_gordon.country = "Israel"  
+
+        # 4. אנדרסון סילבה (ברזיל)
+        silva = Striker(base+3, "Anderson Silva", "Middleweight", 96, 70, 85, 90)
+        silva.skin_color, silva.hair_color, silva.pants_color = (110, 75, 55), (10, 10, 10), (255, 215, 0) # מכנסיים צהובים קלאסיים
+        silva.country = "Brazil"
+
+        # 5. ג'ון ג'ונס (ארה"ב)
+        jones = Grappler(base+4, "Jon Jones", "Heavyweight", 88, 95, 92, 90)
+        jones.skin_color, jones.hair_color, jones.pants_color = (100, 65, 45), (10, 10, 10), (200, 20, 20)
+        jones.country = "USA"
+
+        # איגוד החמישייה לרשימה אחת
+        legends = [khabib, conor, ah_gordon, silva, jones]
+        
+        # 3. הוספה מחדש למאגר הנתונים
         added = 0
         for f in legends:
-            if self.repo.add_fighter(f):
-                added += 1
+            self.repo.add_fighter(f)
+            added += 1
+            
+        # 4. רענון הרשימה והודעה
         self.refresh_fighters()
-        self.push_log(f"Added {added} legends with custom styles to DB.")
-
+        self.push_log(f"Roster Reset: {added} legends ready.")
     # ----------------- HOME -----------------
     def draw_home(self, mouse):
         self.screen.fill(BG)
@@ -228,7 +252,6 @@ class App:
         self.screen.blit(title2, (WIDTH//2 - title2.get_width()//2, 165))
 
         self.btn_vs_cpu.draw(self.screen, mouse)
-        self.btn_2p.draw(self.screen, mouse)
         self.btn_roster.draw(self.screen, mouse)
         self.btn_about.draw(self.screen, mouse)
         self.btn_exit.draw(self.screen, mouse)
@@ -242,27 +265,31 @@ class App:
         self.screen.blit(n, (WIDTH - n.get_width() - 18, HEIGHT - 24))
 
     def draw_home_art(self):
-        x, y = 26, HEIGHT - 260
-        w, h = 360, 230
-        frame = pygame.Rect(x, y, w, h)
-        draw_rect_round(self.screen, frame, (16,16,24), r=18)
-        draw_rect_round(self.screen, frame, (40,40,60), r=18, width=2)
+        # 1. הגדרת הריבוע בפינה השמאלית התחתונה
+        # נשתמש ב-300x300 פיקסלים כדי שיהיה מקום לטקסט
+        art_size = (300, 300)
+        
+        # המיקום: 40 פיקסלים משמאל, ו-340 פיקסלים מהתחתית
+        x = 40
+        y = HEIGHT - 340
+        art_rect = pygame.Rect(x, y, art_size[0], art_size[1])
 
+        # 2. ניסיון לטעון ולהציג את התמונה
         if self.home_img:
-            img = self.home_img
-            ix = x + 12
-            iy = y + 12
-            self.screen.blit(img, (ix, iy))
+            # אנחנו מכווצים את התמונה לריבוע שלנו כדי שהיא לא תצא מהמסגרת
+            scaled_img = pygame.transform.smoothscale(self.home_img, art_size)
+            
+            # הוספת מסגרת דקה מסביב כדי שייראה יפה
+            pygame.draw.rect(self.screen, (40, 40, 60), art_rect, width=3, border_radius=12)
+            
+            # ציור התמונה עצמה בתוך המסגרת
+            self.screen.blit(scaled_img, (x+3, y+3))
+            
         else:
-            # placeholder silhouette
-            pygame.draw.circle(self.screen, (90, 90, 125), (x+120, y+90), 26)
-            pygame.draw.circle(self.screen, (90, 90, 125), (x+240, y+90), 26)
-            pygame.draw.rect(self.screen, (75, 75, 110), (x+98, y+118, 44, 80), border_radius=12)
-            pygame.draw.rect(self.screen, (75, 75, 110), (x+218, y+118, 44, 80), border_radius=12)
-            pygame.draw.circle(self.screen, RED, (x+168, y+160), 18)
-            pygame.draw.circle(self.screen, RED, (x+192, y+160), 18)
-            t = self.font_s.render("Put assets/home_fighters.png here", True, MUTED)
-            self.screen.blit(t, (x+16, y+h-26))
+            # רק למקרה שהקובץ לא נמצא - נצייר ריבוע ריק
+            draw_rect_round(self.screen, art_rect, (20, 20, 30), r=12)
+            t = self.font_s.render("Image not found", True, MUTED)
+            self.screen.blit(t, t.get_rect(center=art_rect.center))
 
     def handle_home(self, ev):
         if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
@@ -272,10 +299,6 @@ class App:
             self.state.mode = "CPU"
             self.scene = "select"
             self.push_log("Mode: VS CPU. Select two fighters.")
-        elif self.btn_2p.clicked(ev):
-            self.state.mode = "2P"
-            self.scene = "select"
-            self.push_log("Mode: 2 Players. Select two fighters.")
         elif self.btn_roster.clicked(ev):
             self.scene = "roster"
             self.roster_selected = None
@@ -353,45 +376,92 @@ class App:
         self.draw_log()
 
     def draw_fighter_list(self, panel_rect, mouse, side="A"):
+        # 1. הגדרת אזור התצוגה והציור שלו
         view = pygame.Rect(panel_rect.x + 18, panel_rect.y + 68, panel_rect.w - 36, panel_rect.h - 88)
         draw_rect_round(self.screen, view, (14, 14, 22), r=14)
-        draw_rect_round(self.screen, view, (45,45,70), r=14, width=2)
+        draw_rect_round(self.screen, view, (45, 45, 70), r=14, width=2)
 
         fighters = self.fighters
         if not fighters:
-            t = self.font.render("No fighters in DB. Click 'Add Legends'.", True, MUTED)
+            t = self.font.render("No fighters in DB. Click 'Add Legends'.", True, (100, 100, 120))
             self.screen.blit(t, (view.x + 16, view.y + 18))
             return
 
+        # 2. ניהול הגלילה (Scrolling)
         item_h = 58
         visible = view.h // item_h
-        scroll = self.scroll_a if side=="A" else self.scroll_b
-        scroll = clamp(scroll, 0, max(0, len(fighters)-visible))
-        if side=="A": self.scroll_a = scroll
+        scroll = self.scroll_a if side == "A" else self.scroll_b
+        scroll = clamp(scroll, 0, max(0, len(fighters) - visible))
+        
+        if side == "A": self.scroll_a = scroll
         else: self.scroll_b = scroll
 
+        # 3. לולאת הציור של הלוחמים ברשימה
         for i in range(visible):
             idx = int(scroll) + i
             if idx >= len(fighters): break
             f = fighters[idx]
-            r = pygame.Rect(view.x + 10, view.y + 10 + i*item_h, view.w - 20, item_h - 10)
+            
+            # הגדרת המלבן של כל שורה ברשימה
+            r = pygame.Rect(view.x + 10, view.y + 10 + i * item_h, view.w - 20, item_h - 10)
 
-            selected = (self.sel_a and f.fighter_id == self.sel_a.fighter_id) if side=="A" else (self.sel_b and f.fighter_id == self.sel_b.fighter_id)
+            # בדיקה אם הלוחם הנוכחי נבחר
+            selected = (self.sel_a and f.fighter_id == self.sel_a.fighter_id) if side == "A" else (self.sel_b and f.fighter_id == self.sel_b.fighter_id)
             bg = (26, 26, 38) if not selected else (34, 30, 44)
             draw_rect_round(self.screen, r, bg, r=12)
-            outline = (RED if side=="A" else BLUE) if selected else (70,70,105)
+            
+            # ציור מסגרת מודגשת במעבר עכבר או בחירה
+            outline = (RED if side == "A" else BLUE) if selected else (70, 70, 105)
             draw_rect_round(self.screen, r, outline, r=12, width=2 if r.collidepoint(mouse) else 1)
 
-            icon_color = RED if side=="A" else BLUE
-            pygame.draw.circle(self.screen, icon_color, (r.x+22, r.y+26), 9)
+            # אייקון צבעוני קטן בצד
+            icon_color = RED if side == "A" else BLUE
+            pygame.draw.circle(self.screen, icon_color, (r.x + 22, r.y + 26), 9)
 
-            name = self.font.render(f.name.upper()[:22], True, TEXT)
-            self.screen.blit(name, (r.x + 44, r.y + 10))
-            sub = self.font_s.render(f"{f.weight_class}  •  {fighter_style(f)}", True, MUTED)
+            # --- הוספת השם והדגל (המעקף של מסד הנתונים) ---
+            # רינדור השם
+            name_txt = self.font.render(f.name.upper()[:22], True, (255, 255, 255))
+            self.screen.blit(name_txt, (r.x + 44, r.y + 10))
+
+            # מילון מדינות שקובע איזה דגל לצייר לפי השם במקום לסמוך על ה-DB
+            country_map = {
+                "Khabib Nurmagomedov": "Russia",
+                "Conor McGregor": "Ireland",
+                'Ahavat "Goldenboy" Gordon': "Israel",
+                "Anderson Silva": "Brazil",
+                "Jon Jones": "USA"
+            }
+
+            # מושכים את שם המדינה מהמילון
+            f_country = country_map.get(f.name)
+
+            if f_country:
+                try:
+                    # טעינת הדגל מתיקיית ה-assets
+                    flag_path = f"assets/{f_country}.png"
+                    flag_img = pygame.image.load(flag_path).convert_alpha()
+                    
+                    # שינוי גודל הדגל לממדים שמתאימים לשורה
+                    flag_img = pygame.transform.scale(flag_img, (24, 16))
+                    
+                    # מיקום הדגל: סוף השם + מרווח של 10 פיקסלים
+                    flag_x = r.x + 44 + name_txt.get_width() + 10
+                    flag_y = r.y + 14 
+                    
+                    self.screen.blit(flag_img, (flag_x, flag_y))
+                except Exception as e:
+                    # אם חסר קובץ או שיש טעות בשם, נדפיס לטרמינל כדי שנדע
+                    print(f"DEBUG: Failed to load flag for {f.name} - {e}")
+                    pass
+
+            # --- תיאור וסטטיסטיקות ---
+            # שורת תיאור (משקל וסגנון)
+            sub = self.font_s.render(f"{f.weight_class}  •  {fighter_style(f)}", True, (140, 140, 160))
             self.screen.blit(sub, (r.x + 44, r.y + 32))
 
+            # הצגת ה-Overall (OVR) בצד ימין
             ovr = int(get_stat(f, "overall_skill", 50))
-            o = self.font.render(f"OVR {ovr}", True, YELLOW)
+            o = self.font.render(f"OVR {ovr}", True, (255, 215, 0)) # צבע צהוב/זהב
             self.screen.blit(o, (r.right - o.get_width() - 14, r.y + 18))
 
     def handle_select(self, ev):
@@ -792,337 +862,220 @@ Return the JSON on a separate line, and keep it valid JSON.
 class FightArena:
     def __init__(self, app: App, f1: Fighter, f2: Fighter, mode: str):
         self.app = app
-        self.f1 = f1
-        self.f2 = f2
-        self.mode = mode  # "CPU" or "2P"
-
+        self.f1, self.f2 = f1, f2
+        self.mode = mode 
         self.arena = pygame.Rect(70, 120, 1140, 520)
+        
+        # נתוני חיים וכוח
+        self.hp1, self.hp2 = 100, 100
+        self.sta1, self.sta2 = 100, 100
+        
+        # טיימרים להבהוב (אפקט פגיעה)
+        self.p1_hit_timer, self.p2_hit_timer = 0.0, 0.0
+        
+        # הגנה וטעינה
+        self.block1_until, self.block2_until = 0.0, 0.0
+        self.cooldowns = {"p1": {"jab":0,"kick":0,"grapple":0}, "p2": {"jab":0,"kick":0,"grapple":0}}
+        self.stun1_until, self.stun2_until = 0.0, 0.0
 
-        self.hp1 = 100
-        self.hp2 = 100
-        self.sta1 = 100
-        self.sta2 = 100
-
-        self.block1_until = 0.0
-        self.block2_until = 0.0
-
-        self.cooldowns = {
-            "p1": {"jab":0,"kick":0,"grapple":0},
-            "p2": {"jab":0,"kick":0,"grapple":0},
-        }
-        self.stun1_until = 0.0
-        self.stun2_until = 0.0
-
-        self.p1 = pygame.Vector2(self.arena.left+220, self.arena.centery)
-        self.p2 = pygame.Vector2(self.arena.right-220, self.arena.centery)
-        self.v1 = pygame.Vector2(0,0)
-        self.v2 = pygame.Vector2(0,0)
-
+        # מיקום התחלתי
+        GROUND_Y = self.arena.bottom - 120
+        self.p1 = pygame.Vector2(self.arena.left + 220, GROUND_Y)
+        self.p2 = pygame.Vector2(self.arena.right - 220, GROUND_Y)
+        self.v1, self.v2 = pygame.Vector2(0,0), pygame.Vector2(0,0)
         self.size = 40
         self.over = False
         self.winner = None
-        self.saved = False
-        self.spawn_time = time.time()
 
         try:
             img = pygame.image.load("assets/arena_bg.png").convert_alpha()
             self.arena_img = pygame.transform.scale(img, (self.arena.width, self.arena.height))
-        except Exception as e:
-            print(f"Error loading arena image: {e}")
-            self.arena_img = None
-
-    def get_octagon_points(self, rect):
-        """מחשבת 8 נקודות עבור זירה מתומנת בתוך מלבן נתון"""
-        x, y, w, h = rect.x, rect.y, rect.width, rect.height
-        offset = w * 0.25  # קובע כמה הפינות יהיו קטומות
-        return [
-            (x + offset, y), (x + w - offset, y),      # צלע עליונה
-            (x + w, y + offset), (x + w, y + h - offset), # צלע ימנית
-            (x + w - offset, y + h), (x + offset, y + h), # צלע תחתונה
-            (x, y + h - offset), (x, y + offset)          # צלע שמאלית
-        ]
+        except: self.arena_img = None
 
     def update(self, dt):
-        if self.over:
-            return
+        if self.over: return
 
+        # התחדשות סטמינה
         self.sta1 = clamp(self.sta1 + 7*dt, 0, 100)
         self.sta2 = clamp(self.sta2 + 7*dt, 0, 100)
 
-        self.p1 += self.v1 * dt
-        self.p2 += self.v2 * dt
+        # תנועה
+        self.p1.x += self.v1.x * dt
+        self.p2.x += self.v2.x * dt
 
-        self.p1.x = clamp(self.p1.x, self.arena.left + self.size, self.arena.right - self.size)
-        self.p1.y = clamp(self.p1.y, self.arena.top + self.size, self.arena.bottom - self.size)
-        self.p2.x = clamp(self.p2.x, self.arena.left + self.size, self.arena.right - self.size)
-        self.p2.y = clamp(self.p2.y, self.arena.top + self.size, self.arena.bottom - self.size)
+        # --- פיזיקה: מעבר חופשי בין צדדים עם דחייה קלה ---
+        dist_x = self.p1.x - self.p2.x
+        if abs(dist_x) < 55:
+            nudge = 2.5
+            if dist_x >= 0: 
+                self.p1.x += nudge; self.p2.x -= nudge
+            else: 
+                self.p1.x -= nudge; self.p2.x += nudge
 
-        if self.mode == "CPU":
-            self.ai_step(dt)
+        # גבולות זירה
+        self.p1.x = clamp(self.p1.x, self.arena.left + 40, self.arena.right - 40)
+        self.p2.x = clamp(self.p2.x, self.arena.left + 40, self.arena.right - 40)
 
-        if self.hp1 <= 0 or self.hp2 <= 0:
+        # עדכון טיימרים להבהוב נזק
+        self.p1_hit_timer = max(0, self.p1_hit_timer - dt)
+        self.p2_hit_timer = max(0, self.p2_hit_timer - dt)
+
+        # עדכון AI וניצחון
+        if self.mode == "CPU": self.ai_step(dt)
+        if int(self.hp1) <= 0 or int(self.hp2) <= 0:
             self.over = True
-            if self.hp1 <= 0 and self.hp2 <= 0:
-                self.winner = "Draw"
-            elif self.hp1 <= 0:
-                self.winner = self.f2.name
-                self.f2.add_win(); self.f1.add_loss()
-            else:
-                self.winner = self.f1.name
-                self.f1.add_win(); self.f2.add_loss()
+            self.winner = self.f2.name if self.hp1 <= 0 else self.f1.name
 
     def handle_event(self, ev):
-        if ev.type == pygame.KEYDOWN:
-            if ev.key == pygame.K_r and self.over:
-                self.__init__(self.app, self.f1, self.f2, self.mode)
-                return
-
-            now = time.time()
-            if not self.over and now > self.stun1_until:
-                if ev.key == pygame.K_1: self.try_attack("p1","jab")
-                if ev.key == pygame.K_2: self.try_attack("p1","kick")
-                if ev.key == pygame.K_3: self.try_attack("p1","grapple")
-                if ev.key == pygame.K_4: self.block1_until = now + 0.7
-                if ev.key == pygame.K_5: self.sta1 = clamp(self.sta1 + 20, 0, 100)
-
-            if self.mode == "2P" and (not self.over) and now > self.stun2_until:
-                if ev.key == pygame.K_6: self.try_attack("p2","jab")
-                if ev.key == pygame.K_7: self.try_attack("p2","kick")
-                if ev.key == pygame.K_8: self.try_attack("p2","grapple")
-                if ev.key == pygame.K_9: self.block2_until = now + 0.7
-                if ev.key == pygame.K_0: self.sta2 = clamp(self.sta2 + 20, 0, 100)
-
-        keys = pygame.key.get_pressed()
-        now = time.time()
-
-        sp1 = get_stat(self.f1, "speed", 70)
-        sp2 = get_stat(self.f2, "speed", 70)
-
-        base1 = 260 + sp1*1.2
-        base2 = 260 + sp2*1.2
-
-        if self.sta1 < 25: base1 *= 0.75
-        if self.sta2 < 25: base2 *= 0.75
-
-        # P1 always arrows (as you asked)
-        dx = (1 if keys[pygame.K_RIGHT] else 0) - (1 if keys[pygame.K_LEFT] else 0)
-        dy = (1 if keys[pygame.K_DOWN] else 0) - (1 if keys[pygame.K_UP] else 0)
-        v = pygame.Vector2(dx, dy)
-        if v.length_squared() > 0: v = v.normalize()
-        self.v1 = v * base1 if now > self.stun1_until else pygame.Vector2(0,0)
-
-        # P2 only if 2P
-        if self.mode == "2P":
-            dx2 = (1 if keys[pygame.K_d] else 0) - (1 if keys[pygame.K_a] else 0)
-            dy2 = (1 if keys[pygame.K_s] else 0) - (1 if keys[pygame.K_w] else 0)
-            v2 = pygame.Vector2(dx2, dy2)
-            if v2.length_squared() > 0: v2 = v2.normalize()
-            self.v2 = v2 * base2 if now > self.stun2_until else pygame.Vector2(0,0)
-
-    def ai_step(self, dt):
-        now = time.time()
-        if now < self.stun2_until:
-            self.v2 = pygame.Vector2(0,0)
+        # איפוס קרב (R) - עובד רק כשהקרב נגמר
+        if ev.type == pygame.KEYDOWN and ev.key == pygame.K_r and self.over:
+            self.__init__(self.app, self.f1, self.f2, self.mode)
             return
 
-        to_p1 = self.p1 - self.p2
-        dist = to_p1.length()
-        dirv = to_p1.normalize() if dist > 1 else pygame.Vector2(0,0)
+        if self.over: return
 
-        sp2 = get_stat(self.f2, "speed", 70)
-        base2 = 260 + sp2*1.2
-        if self.sta2 < 25: base2 *= 0.75
+        # מקשי תנועה (חצים)
+        keys = pygame.key.get_pressed()
+        self.v1.x = 0
+        if keys[pygame.K_LEFT]: self.v1.x = -280
+        if keys[pygame.K_RIGHT]: self.v1.x = 280
 
-        desired = 80 if fighter_style(self.f2) == "Grappler" else 130
-
-        if dist > desired:
-            self.v2 = dirv * base2
-        else:
-            self.v2 *= 0.4
-            if self.sta2 < 25 and random.random() < 0.45:
-                self.sta2 = clamp(self.sta2 + 18, 0, 100)
-            else:
-                tp = fighter_style(self.f2)
-                if tp == "Grappler" and random.random() < 0.55:
-                    self.try_attack("p2","grapple")
-                elif tp == "Striker" and random.random() < 0.6:
-                    self.try_attack("p2","kick")
-                else:
-                    self.try_attack("p2","jab")
-            if random.random() < 0.2:
-                self.block2_until = now + 0.55
+        # מקשי פעולה (1-5)
+        if ev.type == pygame.KEYDOWN:
+            if ev.key == pygame.K_1: self.try_attack("p1", "jab")
+            elif ev.key == pygame.K_2: self.try_attack("p1", "kick")
+            elif ev.key == pygame.K_3: self.try_attack("p1", "grapple")
+            elif ev.key == pygame.K_4: self.block1_until = time.time() + 0.6
+            elif ev.key == pygame.K_5: self.sta1 = clamp(self.sta1 + 15, 0, 100)
 
     def try_attack(self, who, move):
         now = time.time()
         cd = self.cooldowns[who]
-        if now < cd[move]:
-            return
-
-        cost = {"jab":10,"kick":14,"grapple":16}[move]
-        if who == "p1":
-            if self.sta1 < cost: return
-            self.sta1 -= cost
-        else:
-            if self.sta2 < cost: return
-            self.sta2 -= cost
-
-        cd[move] = now + {"jab":0.35,"kick":0.55,"grapple":0.75}[move]
+        if now < cd[move]: return
+        
+        cost = {"jab":10, "kick":15, "grapple":20}[move]
+        if who == "p1" and self.sta1 < cost: return
+        if who == "p2" and self.sta2 < cost: return
+        
+        if who == "p1": self.sta1 -= cost
+        else: self.sta2 -= cost
+        
+        cd[move] = now + {"jab":0.4, "kick":0.6, "grapple":0.8}[move]
         self.resolve_attack(who, move)
 
     def resolve_attack(self, who, move):
-        atk = self.f1 if who=="p1" else self.f2
-        dfd = self.f2 if who=="p1" else self.f1
-        atk_pos = self.p1 if who=="p1" else self.p2
-        dfd_pos = self.p2 if who=="p1" else self.p1
+        dist = (self.p1 - self.p2).length()
+        if dist > (135 if move != "grapple" else 90): return
+        
+        dmg = random.randint(6, 11) if move == "jab" else random.randint(13, 19)
+        if (time.time() < self.block2_until if who == "p1" else time.time() < self.block1_until):
+            dmg //= 2
 
-        dist = (dfd_pos - atk_pos).length()
-        in_range = dist <= (125 if move!="grapple" else 85)
-        if not in_range:
-            return
-
-        STR = get_stat(atk,"striking_power",50)
-        GRP = get_stat(atk,"grappling_skill",50)
-        KICK = get_stat(atk,"kick_power",STR)
-        SUB = get_stat(atk,"submission_skill",GRP)
-        VERS = get_stat(atk,"versatility",60)
-        DEF = int((get_stat(dfd,"takedown_defense",60) + get_stat(dfd,"grappling_skill",60))/2)
-
-        st = fighter_style(atk)
-        bonus = 1.0
-        if st == "Striker" and move in ("jab","kick"): bonus = 1.15
-        if st == "Grappler" and move == "grapple": bonus = 1.2
-        if st == "Hybrid": bonus = 1.07
-
-        if move == "jab":
-            dmg = int((6 + STR*0.10 + VERS*0.03) * bonus) + random.randint(-2,3)
-        elif move == "kick":
-            dmg = int((8 + KICK*0.11 + VERS*0.02) * bonus) + random.randint(-3,4)
-        else:
-            dmg = int((7 + GRP*0.08 + SUB*0.06) * bonus) + random.randint(-2,5)
-
-        dmg = clamp(dmg, 3, 28)
-
-        now = time.time()
-        blocking = (now < self.block2_until) if who=="p1" else (now < self.block1_until)
-        if blocking:
-            dmg = max(1, int(dmg * 0.45))
-
-        if move == "grapple":
-            dmg = max(1, int(dmg * (100 - clamp(DEF,10,95)) / 100 + 6))
-
-        if who=="p1":
+        if who == "p1":
             self.hp2 = clamp(self.hp2 - dmg, 0, 100)
-            if move=="grapple" and random.random() < 0.35:
-                self.stun2_until = time.time() + 0.45
+            self.p2_hit_timer = 0.15 # הפעלת הבהוב לשחקן 2
         else:
             self.hp1 = clamp(self.hp1 - dmg, 0, 100)
-            if move=="grapple" and random.random() < 0.35:
-                self.stun1_until = time.time() + 0.45
-
-
+            self.p1_hit_timer = 0.15 # הפעלת הבהוב לשחקן 1
 
     def draw_fighter(self, surf, center, fighter_obj, main_color):
+        SCALE = 1.6
         cx, cy = int(center.x), int(center.y)
+        is_p1 = (center == self.p1)
+        p_key = "p1" if is_p1 else "p2"
+        dir_x = 1 if self.p1.x < self.p2.x else -1
+        if not is_p1: dir_x *= -1
+
+        t = time.time()
+        # בדיקת מצבים לאנימציה
+        is_punching = t < self.cooldowns[p_key].get("jab", 0)
+        is_kicking = t < self.cooldowns[p_key].get("kick", 0)
+        is_grappling = t < self.cooldowns[p_key].get("grapple", 0)
+        is_blocking = (t < self.block1_until) if is_p1 else (t < self.block2_until)
         
-        # שליפת צבעים מהאובייקט (עם ערכי ברירת מחדל ליתר ביטחון)
-        skin = getattr(fighter_obj, 'skin_color', (255, 224, 189))
+        skin_base = getattr(fighter_obj, 'skin_color', (255, 224, 189))
+        skin = (255, 100, 100) if ((self.p1_hit_timer > 0 if is_p1 else self.p2_hit_timer > 0)) else skin_base
         hair = getattr(fighter_obj, 'hair_color', (50, 30, 20))
         pants = getattr(fighter_obj, 'pants_color', (50, 50, 50))
-        
-        # 1. גוף (טורסו)
-        pygame.draw.ellipse(surf, skin, (cx-22, cy-15, 44, 50))
-        
-        # 2. מכנסיים (החלק התחתון של האליפסה)
-        pygame.draw.rect(surf, pants, (cx-22, cy+15, 44, 20), border_radius=5)
-        
-        # 3. ראש
-        pygame.draw.circle(surf, skin, (cx, cy-35), 15)
-        
-        # 4. שיער (חצי עיגול מעל הראש)
-        pygame.draw.arc(surf, hair, (cx-16, cy-51, 32, 30), 0, 3.14, 8)
-        
-        # 5. כפפות (בצבע הקבוצה - אדום/כחול)
-        pygame.draw.circle(surf, main_color, (cx-30, cy+5), 9) # כפפה שמאל
-        pygame.draw.circle(surf, main_color, (cx+30, cy+5), 9) # כפפה ימין
-        
-        # 6. קווי מתאר (כדי שייראה מקצועי)
-        pygame.draw.circle(surf, (20, 20, 20), (cx, cy-35), 15, 2)
+        limb_thickness = int(14 * SCALE)
 
+        # 1. רגליים וגוף (נשאר אותו דבר)
+        pygame.draw.line(surf, skin, (cx - int(10*SCALE)*dir_x, cy + int(30*SCALE)), (cx - int(20*SCALE)*dir_x, cy + int(80*SCALE)), limb_thickness)
+        if is_kicking:
+            pygame.draw.line(surf, skin, (cx + int(10*SCALE)*dir_x, cy + int(30*SCALE)), (cx + int(55*SCALE)*dir_x, cy + int(15*SCALE)), limb_thickness)
+        else:
+            pygame.draw.line(surf, skin, (cx + int(10*SCALE)*dir_x, cy + int(30*SCALE)), (cx + int(20*SCALE)*dir_x, cy + int(80*SCALE)), limb_thickness)
+        
+        body_w, body_h = int(55*SCALE), int(70*SCALE)
+        pygame.draw.ellipse(surf, skin, (cx - body_w//2, cy - int(20*SCALE), body_w, body_h))
+        pygame.draw.rect(surf, pants, (cx - body_w//2, cy + int(25*SCALE), body_w, int(25*SCALE)), border_radius=6)
 
+        # 2. ידיים וכפפות - הלוגיקה החדשה!
+        f_hand_x, f_hand_y = cx + int(20*SCALE)*dir_x, cy - int(10*SCALE) # יד קדמית
+        b_hand_x, b_hand_y = cx - int(15*SCALE)*dir_x, cy - int(5*SCALE) # יד אחורית
+
+        if is_blocking:
+            # שתי הידיים עולות לכיוון הראש
+            f_hand_x, f_hand_y = cx + int(10*SCALE)*dir_x, cy - int(45*SCALE)
+            b_hand_x, b_hand_y = cx - int(5*SCALE)*dir_x, cy - int(40*SCALE)
+        elif is_grappling:
+            # שתי הידיים נשלחות קדימה לתפיסה
+            reach = int(40 * SCALE)
+            f_hand_x += reach * dir_x
+            b_hand_x += (reach + 20) * dir_x
+            f_hand_y, b_hand_y = cy - int(15*SCALE), cy - int(15*SCALE)
+        elif is_punching:
+            f_hand_x += int(48 * SCALE) * dir_x
+
+        # ציור הזרועות והכפפות
+        pygame.draw.line(surf, skin, (cx + int(15*SCALE)*dir_x, cy - int(10*SCALE)), (f_hand_x, f_hand_y), limb_thickness)
+        pygame.draw.line(surf, skin, (cx - int(10*SCALE)*dir_x, cy - int(5*SCALE)), (b_hand_x, b_hand_y), limb_thickness)
+        pygame.draw.circle(surf, main_color, (f_hand_x, f_hand_y), int(15 * SCALE)) 
+        pygame.draw.circle(surf, main_color, (b_hand_x, b_hand_y), int(13 * SCALE))
+
+        # 3. ראש ושיער (עם התמיכה ב-AH Gordon)
+        head_r = int(20 * SCALE)
+        head_pos = (cx, cy - int(45*SCALE))
+        if getattr(fighter_obj, 'hair_length', 'short') == 'long':
+            pygame.draw.rect(surf, hair, (head_pos[0]-head_r, head_pos[1], head_r*2, int(25*SCALE)), border_bottom_left_radius=10, border_bottom_right_radius=10)
+        pygame.draw.circle(surf, skin, head_pos, head_r)
+        pygame.draw.arc(surf, hair, (head_pos[0]-head_r, head_pos[1]-head_r, head_r*2, head_r*2), 0, 3.14, int(12*SCALE))
 
     def draw(self, surf, mouse):
         surf.fill(BG)
-
-        # HUD - מדי חיים במרכז למעלה
+        if self.arena_img: surf.blit(self.arena_img, self.arena.topleft)
+        
         center_x = WIDTH // 2
-        bar_w = 400
+        self.draw_bar(surf, center_x - 420, 40, 400, 25, self.f1.name, self.hp1, 100, RED)
+        self.draw_bar(surf, center_x - 420, 70, 400, 12, "STA", self.sta1, 100, YELLOW)
+        self.draw_bar(surf, center_x + 20, 40, 400, 25, self.f2.name, self.hp2, 100, BLUE)
+        self.draw_bar(surf, center_x + 20, 70, 400, 12, "STA", self.sta2, 100, YELLOW)
         
-        # לוחם 1 (שמאל)
-        self.draw_bar(surf, center_x - bar_w - 20, 40, bar_w, 25, self.f1.name, self.hp1, 100, RED)
-        
-        # לוחם 2 (ימין)
-        self.draw_bar(surf, center_x + 20, 40, bar_w, 25, self.f2.name, self.hp2, 100, BLUE)
-      
-        # ציור רקע הזירה החדש
-        if self.arena_img:
-            # אם התמונה נטענה, נשים אותה
-            surf.blit(self.arena_img, self.arena.topleft)
-        else:
-            # אם אין תמונה, נצייר רקע אפור כגיבוי
-            pygame.draw.rect(surf, (40, 40, 50), self.arena)
-            pygame.draw.rect(surf, (200, 200, 200), self.arena, width=3)
-        
-        # 3. הוספת לוגו UFC במרכז (אופציונלי - טקסט פשוט)
-        logo_font = pygame.font.SysFont(None, 120)
-        logo_surf = logo_font.render("UFC", True, (35, 38, 52))
-        logo_rect = logo_surf.get_rect(center=self.arena.center)
-        surf.blit(logo_surf, logo_rect)
-
-        # fighters
         self.draw_fighter(surf, self.p1, self.f1, RED)
         self.draw_fighter(surf, self.p2, self.f2, BLUE)
-
-        # controls overlay (first 3 seconds)
-        now = time.time()
-        if now - self.spawn_time < 3.0:
-            box = pygame.Rect(260, 600, 760, 80)
-            draw_rect_round(surf, box, (10,10,14), r=16)
-            draw_rect_round(surf, box, BORDER, r=16, width=2)
-            if self.mode == "CPU":
-                txt = "VS CPU | P1: Arrows + 1/2/3/4/5"
-            else:
-                txt = "2 Players | P1: Arrows+1..5  |  P2: WASD+6..0"
-            t = self.app.font.render(txt, True, MUTED)
-            surf.blit(t, t.get_rect(center=box.center))
-
-        # winner overlay
-        if self.hp1 <= 0 or self.hp2 <= 0:
-            if not self.over:
-                self.over = True
-                if self.hp1 <= 0 and self.hp2 <= 0:
-                    self.winner = "Draw"
-                elif self.hp1 <= 0:
-                    self.winner = self.f2.name
-                else:
-                    self.winner = self.f1.name
-
-            overlay = pygame.Rect(260, 240, 760, 220)
-            draw_rect_round(surf, overlay, (10,10,14), r=18)
-            draw_rect_round(surf, overlay, BORDER, r=18, width=2)
-            wtxt = self.app.font_title.render(f"{self.winner}", True, GREEN if self.winner!="Draw" else YELLOW)
-            surf.blit(wtxt, wtxt.get_rect(center=(overlay.centerx, overlay.y+85)))
-            t = self.app.font.render("Press R to restart  |  ESC to go back", True, MUTED)
-            surf.blit(t, t.get_rect(center=(overlay.centerx, overlay.y+150)))
+        
+        if self.over:
+            overlay = pygame.Rect(WIDTH//2-250, HEIGHT//2-100, 500, 200)
+            pygame.draw.rect(surf, PANEL, overlay, border_radius=20)
+            pygame.draw.rect(surf, BORDER, overlay, width=3, border_radius=20)
+            t1 = self.app.font_b.render(f"WINNER: {self.winner}", True, TEXT)
+            t2 = self.app.font.render("Press R to Restart", True, MUTED)
+            surf.blit(t1, t1.get_rect(center=(WIDTH//2, HEIGHT//2-20)))
+            surf.blit(t2, t2.get_rect(center=(WIDTH//2, HEIGHT//2+40)))
 
     def draw_bar(self, surf, x, y, w, h, label, val, maxv, color):
-        val = clamp(val, 0, maxv)
-        draw_rect_round(surf, pygame.Rect(x, y, w, h), (12, 12, 18), r=10)
-        draw_rect_round(surf, pygame.Rect(x, y, w, h), BORDER, r=10, width=2)
-        fill_w = int((w - 4) * (val / maxv if maxv else 0))
-        draw_rect_round(surf, pygame.Rect(x + 2, y + 2, fill_w, h - 4), color, r=10)
-        txt = self.app.font_s.render(f"{label}: {val}/{maxv}", True, TEXT)
-        surf.blit(txt, (x, y - 20))
+        pygame.draw.rect(surf, (12, 12, 18), (x, y, w, h), border_radius=10)
+        fill_w = int((w - 4) * (clamp(val, 0, maxv) / maxv))
+        if fill_w > 0: pygame.draw.rect(surf, color, (x+2, y+2, fill_w, h-4), border_radius=10)
+        if label != "STA":
+            t = self.app.font_s.render(f"{label}: {int(val)}/100", True, TEXT)
+            surf.blit(t, (x, y - 20))
 
+    def ai_step(self, dt):
+        if time.time() < self.stun2_until: return
+        dist = (self.p1 - self.p2).length()
+        dir_x = 1 if self.p1.x > self.p2.x else -1
+        self.v2.x = dir_x * 240 if dist > 115 else 0
+        if dist < 135 and random.random() < 0.03:
+            self.try_attack("p2", "jab")
 
-if __name__ == "__main__":
-    App().run()

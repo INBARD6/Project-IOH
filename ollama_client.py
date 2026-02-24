@@ -1,230 +1,95 @@
+
 """
-Ollama Client (Optional)
-לקוח לשרת Ollama - אינטגרציה עם AI מקומי
-מדגים: אינטגרציה עם LLM, ניתוח טקסט
+Ollama Client (Enhanced)
+אינטגרציה עם AI מקומי - גרסת פיתוח ותשתית עתידית.
 """
 
 import requests
 import json
-from typing import Optional
+import re
+from typing import Optional, Dict, Any
 
 
 class OllamaClient:
-    """
-    לקוח לשרת Ollama מקומי
-    מאפשר ניתוח טקסט, Q&A, וסנטימנט
-    """
-    
-    def __init__(self, base_url: str = "http://localhost:11434"):
+    def __init__(self, base_url: str = "http://localhost:11434", mock_mode: bool = True):
         """
-        אתחול לקוח Ollama
+        אתחול לקוח Ollama.
         
         Args:
-            base_url: כתובת שרת Ollama
+            base_url: כתובת שרת Ollama.
+            mock_mode: אם True, יחזיר תשובות קבועות מראש ללא צורך בשרת (מעולה למצגות).
         """
         self._base_url = base_url
-        self._model = "llama2"  # ברירת מחדל
-    
+        self._model = "llama3" 
+        self._mock_mode = mock_mode
+
     def is_available(self) -> bool:
-        """
-        בדיקה האם שרת Ollama זמין
-        
-        Returns:
-            bool: האם השרת זמין
-        """
+        if self._mock_mode:
+            return True
         try:
-            response = requests.get(f"{self._base_url}/api/tags", timeout=5)
+            response = requests.get(f"{self._base_url}/api/tags", timeout=2)
             return response.status_code == 200
         except Exception:
             return False
-    
+
     def generate(self, prompt: str, model: str = None) -> Optional[str]:
-        """
-        יצירת תשובה מהמודל
-        
-        Args:
-            prompt: השאלה/בקשה
-            model: שם המודל (אופציונלי)
+        if self._mock_mode:
+            return "This is a simulated AI response for development purposes."
             
-        Returns:
-            str: התשובה או None במקרה של כשלון
-        """
         if not self.is_available():
-            print("❌ Ollama server is not available")
             return None
-        
+
         used_model = model or self._model
-        
         try:
             response = requests.post(
                 f"{self._base_url}/api/generate",
-                json={
-                    "model": used_model,
-                    "prompt": prompt,
-                    "stream": False
-                },
-                timeout=60
+                json={"model": used_model, "prompt": prompt, "stream": False},
+                timeout=30
             )
-            
             if response.status_code == 200:
-                result = response.json()
-                return result.get('response', '')
-            else:
-                print(f"❌ Error: {response.status_code}")
-                return None
-                
+                return response.json().get('response', '')
         except Exception as e:
-            print(f"❌ Error communicating with Ollama: {e}")
-            return None
-    
-    def analyze_fighter_description(self, description: str) -> dict:
+            print(f"❌ Communication Error: {e}")
+        return None
+
+    def analyze_fighter_description(self, description: str) -> Dict[str, Any]:
         """
-        ניתוח תיאור של לוחם
-        
-        Args:
-            description: תיאור טקסטואלי של הלוחם
-            
-        Returns:
-            dict: ניתוח הטקסט
+        ניתוח לוחם עם חילוץ JSON חסין שגיאות.
         """
-        prompt = f"""
-        Analyze this UFC fighter description and extract key information:
-        
-        Description: {description}
-        
-        Please provide:
-        1. Fighting style (Striker/Grappler/Hybrid)
-        2. Strengths (list 2-3)
-        3. Suggested weight class
-        4. Overall skill level (1-10)
-        
-        Format your response as JSON.
-        """
-        
+        if self._mock_mode:
+            return {
+                'fighting_style': 'Hybrid',
+                'strengths': ['Versatility', 'Cardio'],
+                'skill_level': 8,
+                'success': True
+            }
+
+        prompt = f"Analyze this UFC fighter: {description}. Return ONLY a JSON with: fighting_style, strengths (list), skill_level (1-10)."
         response = self.generate(prompt)
-        
+
         if response:
             try:
-                # ניסיון לחלץ JSON מהתשובה
-                # זה פשטני - בפרודקשן צריך parsing מתוחכם יותר
-                return {
-                    'raw_analysis': response,
-                    'success': True
-                }
+                # שימוש ב-Regex כדי למצוא את ה-JSON בתוך הטקסט (למקרה שה-AI מוסיף מלל מיותר)
+                json_match = re.search(r'\{.*\}', response, re.DOTALL)
+                if json_match:
+                    data = json.loads(json_match.group())
+                    data['success'] = True
+                    return data
             except Exception:
-                return {
-                    'raw_analysis': response,
-                    'success': False
-                }
+                return {'raw_analysis': response, 'success': False}
         
         return {'success': False, 'error': 'No response'}
-    
-    def generate_fighter_matchup_analysis(self, fighter1_name: str, 
-                                         fighter2_name: str,
-                                         fighter1_style: str,
-                                         fighter2_style: str) -> str:
-        """
-        ניתוח התאמה בין שני לוחמים
-        
-        Args:
-            fighter1_name: שם לוחם 1
-            fighter2_name: שם לוחם 2
-            fighter1_style: סגנון לוחם 1
-            fighter2_style: סגנון לוחם 2
-            
-        Returns:
-            str: ניתוח התאמה
-        """
-        prompt = f"""
-        Analyze this UFC matchup:
-        
-        Fighter 1: {fighter1_name} (Style: {fighter1_style})
-        Fighter 2: {fighter2_name} (Style: {fighter2_style})
-        
-        Provide a brief analysis (2-3 sentences) of:
-        - Style matchup advantages
-        - Key factors to watch
-        - Prediction
-        """
-        
-        response = self.generate(prompt)
-        return response if response else "Analysis not available"
-    
-    def sentiment_analysis(self, text: str) -> str:
-        """
-        ניתוח סנטימנט של טקסט
-        
-        Args:
-            text: הטקסט לניתוח
-            
-        Returns:
-            str: חיובי/שלילי/נייטרלי
-        """
-        prompt = f"""
-        Analyze the sentiment of this text about a UFC fight or fighter.
-        Respond with only one word: Positive, Negative, or Neutral.
-        
-        Text: {text}
-        """
-        
-        response = self.generate(prompt)
-        
-        if response:
-            response_lower = response.lower().strip()
-            if 'positive' in response_lower:
-                return 'Positive'
-            elif 'negative' in response_lower:
-                return 'Negative'
-            else:
-                return 'Neutral'
-        
-        return 'Unknown'
-    
-    def get_available_models(self) -> list:
-        """
-        קבלת רשימת מודלים זמינים
-        
-        Returns:
-            list: רשימת שמות מודלים
-        """
-        try:
-            response = requests.get(f"{self._base_url}/api/tags", timeout=5)
-            if response.status_code == 200:
-                data = response.json()
-                return [model['name'] for model in data.get('models', [])]
-        except Exception as e:
-            print(f"❌ Error retrieving available models: {e}")
-        
-        return []
-    
-    def set_model(self, model: str):
-        """
-        הגדרת מודל ברירת מחדל
-        
-        Args:
-            model: שם המודל
-        """
-        self._model = model
-        print(f"✅ Model set to {model}")
 
+    def generate_fighter_matchup_analysis(self, f1_name: str, f2_name: str, f1_style: str, f2_style: str) -> str:
+        if self._mock_mode:
+            return f"Matchup Analysis: {f1_name} ({f1_style}) vs {f2_name} ({f2_style}). Key factor: Grappling vs Striking dynamics. Prediction: Close fight."
+            
+        prompt = f"Analyze UFC matchup: {f1_name} ({f1_style}) vs {f2_name} ({f2_style}). 2-3 sentences max."
+        return self.generate(prompt) or "Analysis currently unavailable."
 
-# דוגמה לשימוש
+# --- הרצה לבדיקה ---
 if __name__ == "__main__":
-    client = OllamaClient()
-    
-    if client.is_available():
-        print("✅Ollama is available!")
-        
-        # בדיקת מודלים זמינים
-        models = client.get_available_models()
-        print(f"Available models: {models}")
-        
-        # דוגמה לשימוש
-        analysis = client.generate_fighter_matchup_analysis(
-            "Conor McGregor", "Khabib Nurmagomedov",
-            "Striker", "Grappler"
-        )
-        print(f"\nmatch analysis:\n{analysis}")
-    else:
-        print("❌ Ollama server is not available")
-        print("To install: docker pull ollama/ollama")
+    # מצב פיתוח (Mock) - לא דורש שרת Ollama פעיל
+    client = OllamaClient(mock_mode=True)
+    print(f"Status: {'Online' if client.is_available() else 'Offline'}")
+    print(client.generate_fighter_matchup_analysis("Khabib", "Conor", "Grappler", "Striker"))
