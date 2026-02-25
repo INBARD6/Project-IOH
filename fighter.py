@@ -39,6 +39,15 @@ class Fighter:
         self.hair_color = (40, 40, 40)
         self.pants_color = (30, 30, 30)
     
+    # העמסת אופקטורים (Operator Overloading)
+    def __repr__(self):
+        """מגדיר איך האובייקט יוצג כשמדפיסים אותו למתכנת"""
+        return f"Fighter: {self._name} ({self._weight_class})"
+
+    def __add__(self, other):
+        """חיבור (Overloading) של שני לוחמים - מחזיר את סך כוח המכה שלהם"""
+        return self._striking_power + other._striking_power
+
     # Properties לאנקפסולציה
     @property
     def fighter_id(self):

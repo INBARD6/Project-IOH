@@ -5,7 +5,7 @@ MainController Class
 """
 
 from cli_view import CLIView
-from repository import Repository
+from models.repository import Repository
 from combat_engine import CombatEngine
 from fighter import Fighter
 from striker import Striker
