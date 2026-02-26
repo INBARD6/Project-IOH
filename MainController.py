@@ -6,7 +6,6 @@ MainController Class
 
 from cli_view import CLIView
 from models.repository import Repository
-from combat_engine import CombatEngine
 from fighter import Fighter
 from striker import Striker
 from grappler import Grappler
@@ -23,7 +22,6 @@ class MainController:
         """אתחול הבקר"""
         self._view = CLIView()
         self._repository = Repository()
-        self._combat_engine = CombatEngine()
         self._running = False
         self._next_fighter_id = self._get_next_fighter_id()
     
@@ -326,16 +324,6 @@ class MainController:
             except ValueError:
                 self._view.show_error("יש להזין מספר")
                 return
-        
-        # הרצת הטורניר
-        if self._view.confirm_action("להתחיל את הטורניר?"):
-            champion = self._combat_engine.simulate_tournament(selected_fighters)
-            
-            # עדכון כל הלוחמים במסד נתונים
-            for fighter in selected_fighters:
-                self._repository.update_fighter(fighter)
-            
-            self._view.show_success(f"הטורניר הסתיים! האלוף: {champion.name}")
     
     def _update_fighter(self):
         """עדכון לוחם"""

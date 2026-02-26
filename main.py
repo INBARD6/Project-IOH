@@ -1,4 +1,4 @@
-# אנחנו מייבאים את המשחק המלא שלכם!
+# אנחנו מייבאים את המשחק המלא!
 from ufc_fight_simulator_pygame import App
 
 def main():
